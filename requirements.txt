@@ -17,3 +17,6 @@ httpx==0.28.1
 
 # LLMs
 langchain-groq>=0.2.0
+
+# Security
+fastapi-security-headers>=0.1.0

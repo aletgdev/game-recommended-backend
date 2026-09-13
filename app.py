@@ -29,6 +29,7 @@ logging.basicConfig(
 )
 
 from middleware import RateLimitMiddleware
+from fastapi_security_headers import SecurityHeadersMiddleware, Presets
 from services import sentiment_service, cache_service
 from services.steam import close_http_client
 from routers import games_router, health_router, rag_router
@@ -62,6 +63,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Cabeceras de seguridad HTTP OWASP (compatible con Swagger UI)
+app.add_middleware(SecurityHeadersMiddleware, config=Presets.swagger_friendly())
 
 # Aplicar middleware de rate limit primero (para que quede interno)
 app.add_middleware(RateLimitMiddleware, max_requests=RATE_LIMIT, window_seconds=RATE_WINDOW)
