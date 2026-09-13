@@ -1,3 +1,4 @@
+import asyncio
 import html
 from fastapi import APIRouter, Query, HTTPException, Response
 from starlette.concurrency import run_in_threadpool
@@ -115,12 +116,12 @@ async def analizar_reseñas(
             cached_copy["total_reviews_analyzed"] = len(cached_copy["reviews_classified"])
         return cached_copy
 
-    # 1. Obtener piscina amplia de reseñas desde la API pública de Steam para curación
+    # 1. Obtener piscina amplia de reseñas y detalles del juego en paralelo desde Steam
     fetch_limit = max(limit * 3, 60)
-    reviews_raw = await obtener_reseñas_steam(app_id, fetch_limit)
-
-    # 1.5 Obtener detalles adicionales del juego
-    game_details = await obtener_detalles_juego(app_id)
+    reviews_raw, game_details = await asyncio.gather(
+        obtener_reseñas_steam(app_id, fetch_limit),
+        obtener_detalles_juego(app_id),
+    )
 
     if not reviews_raw:
         empty_res = {

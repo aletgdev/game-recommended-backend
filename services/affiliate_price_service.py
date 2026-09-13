@@ -2,6 +2,7 @@ import logging
 import httpx
 import urllib.parse
 from cachetools import TTLCache
+from services.steam import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -35,27 +36,27 @@ async def fetch_cheapshark_deal(app_id: int, game_name: str) -> dict:
     deals_data = {"cheapshark_best": None, "discount_pct": 0}
 
     try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
-            url = f"https://www.cheapshark.com/api/1.0/games?steamAppID={app_id}"
-            response = await client.get(url, headers=headers)
+        client = await get_http_client()
+        url = f"https://www.cheapshark.com/api/1.0/games?steamAppID={app_id}"
+        response = await client.get(url, headers=headers, timeout=4.0)
 
-            if response.status_code == 200:
-                data = response.json()
-                if isinstance(data, dict) and data.get("cheapestPrice"):
-                    cheapest = data["cheapestPrice"]
-                    cheapest_val = float(cheapest.get("price", 0))
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, dict) and data.get("cheapestPrice"):
+                cheapest = data["cheapestPrice"]
+                cheapest_val = float(cheapest.get("price", 0))
+                if cheapest_val > 0:
+                    deals_data["cheapshark_best"] = f"{cheapest_val:.2f} $"
+
+        if not deals_data["cheapshark_best"] and game_name:
+            search_url = f"https://www.cheapshark.com/api/1.0/games?title={urllib.parse.quote(game_name)}"
+            res = await client.get(search_url, headers=headers, timeout=4.0)
+            if res.status_code == 200:
+                arr = res.json()
+                if isinstance(arr, list) and len(arr) > 0:
+                    cheapest_val = float(arr[0].get("cheapest", 0))
                     if cheapest_val > 0:
                         deals_data["cheapshark_best"] = f"{cheapest_val:.2f} $"
-
-            if not deals_data["cheapshark_best"] and game_name:
-                search_url = f"https://www.cheapshark.com/api/1.0/games?title={urllib.parse.quote(game_name)}"
-                res = await client.get(search_url, headers=headers)
-                if res.status_code == 200:
-                    arr = res.json()
-                    if isinstance(arr, list) and len(arr) > 0:
-                        cheapest_val = float(arr[0].get("cheapest", 0))
-                        if cheapest_val > 0:
-                            deals_data["cheapshark_best"] = f"{cheapest_val:.2f} $"
     except Exception as e:
         logger.debug(f"CheapShark lookup skipped for app_id={app_id}: {e}")
 
