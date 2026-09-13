@@ -8,7 +8,7 @@
 
 API REST asíncrona de alto rendimiento desarrollada con **FastAPI** que impulsa la plataforma **Game Recommended AI**. Diseñada bajo arquitectura limpia y principios de ingeniería de software para auditar, filtrar y clasificar reseñas en español de videojuegos en Steam mediante Procesamiento de Lenguaje Natural (NLP), generar síntesis editoriales con LLMs (Groq), recomendar títulos por similitud semántica (RAG) y comparar precios con plataformas de afiliados.
 
-🚀 **[Probar la Aplicación en Producción](https://game-recommended.alejandrotg.es)** | 📚 **[Documentación OpenAPI Swagger](https://game-recommended.alejandrotg.es/docs)**
+🚀 **[Probar la Aplicación en Producción](https://game-recommended.alejandrotg.es)** | 📚 **[Documentación OpenAPI Swagger](https://api-game-recommended.alejandrotg.es/docs)**
 
 ---
 
