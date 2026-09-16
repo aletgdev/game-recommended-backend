@@ -28,7 +28,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-from middleware import RateLimitMiddleware
+from middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from fastapi_security_headers import SecurityHeadersMiddleware, Presets
 from services import sentiment_service, cache_service
 from services.steam import close_http_client
@@ -79,6 +79,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request logging y X-Request-ID (capa más externa)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Registrar routers
 app.include_router(games_router)

@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from fastapi import APIRouter
 from services.sentiment import sentiment_service
 from services.cache import cache_service
@@ -48,4 +49,6 @@ def health_check():
             "path": sentiment_service.model_path,
         },
         "cache": cache_service.stats,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0.0",
     }

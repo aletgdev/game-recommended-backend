@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import uuid
 from cachetools import TTLCache
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -49,6 +50,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         "detail": "Demasiadas peticiones de recomendación IA. Por favor, espera un momento.",
                         "retry_after_seconds": max(retry_after, 1),
                     },
+                    headers={"Retry-After": str(max(retry_after, 1))},
                 )
             rag_timestamps.append(now)
             self.rag_request_history[client_ip] = rag_timestamps
@@ -66,8 +68,36 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "detail": "Demasiadas peticiones. Por favor, intentalo de nuevo mas tarde.",
                     "retry_after_seconds": max(retry_after, 1),
                 },
+                headers={"Retry-After": str(max(retry_after, 1))},
             )
 
         timestamps.append(now)
         self.request_history[client_ip] = timestamps
         return await call_next(request)
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware ligero que registra cada request a nivel DEBUG con el formato:
+    method path status duration_ms
+    y genera/propaga un header X-Request-ID.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+        request.state.request_id = request_id
+
+        start = time.time()
+        response = await call_next(request)
+        duration_ms = round((time.time() - start) * 1000, 2)
+
+        logger.debug(
+            "%s %s %s %sms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration_ms,
+        )
+
+        response.headers["X-Request-ID"] = request_id
+        return response

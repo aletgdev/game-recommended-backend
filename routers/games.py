@@ -74,7 +74,7 @@ def generar_badge_svg(recommendation_level: str, positives_pct: float) -> str:
 
 
 @router.get("/api/search")
-async def buscar_juegos(term: str = Query(..., min_length=1, description="Nombre o término de búsqueda del juego")):
+async def buscar_juegos(term: str = Query(..., min_length=1, description="Nombre o término de búsqueda del juego"), response: Response = None):
     """
     Busca juegos en la API pública de Steam utilizando un término.
     Respuestas cacheadas 5 minutos por término (case-insensitive).
@@ -88,13 +88,16 @@ async def buscar_juegos(term: str = Query(..., min_length=1, description="Nombre
 
     result = await buscar_juegos_steam(term)
     cache_service.set_search(term, result)
+    if response is not None:
+        response.headers["Cache-Control"] = "public, max-age=300"
     return result
 
 
 @router.get("/api/analyze/{app_id}")
 async def analizar_reseñas(
     app_id: int,
-    limit: int = Query(30, ge=5, le=50, description="Cantidad máxima de reseñas a analizar (máximo 50)")
+    limit: int = Query(30, ge=5, le=50, description="Cantidad máxima de reseñas a analizar (máximo 50)"),
+    response: Response = None,
 ):
     """
     Obtiene las reseñas más recientes en español de un juego en Steam,
@@ -193,12 +196,15 @@ async def analizar_reseñas(
     else:
         nivel_recomendacion = "No Recomendado"
 
-    groq_summary = await generate_game_summary_groq(
-        game_name=game_details.get("name") if game_details else f"AppID {app_id}",
-        app_id=app_id,
-        recommendation_level=nivel_recomendacion,
-        reviews_texts=textos_crudos,
-        game_details=game_details,
+    # 5. Lanzar síntesis Groq en paralelo con la construcción del resultado
+    groq_task = asyncio.create_task(
+        generate_game_summary_groq(
+            game_name=game_details.get("name") if game_details else f"AppID {app_id}",
+            app_id=app_id,
+            recommendation_level=nivel_recomendacion,
+            reviews_texts=textos_crudos,
+            game_details=game_details,
+        )
     )
 
     result = {
@@ -212,10 +218,12 @@ async def analizar_reseñas(
         "steam_voted_up_pct": pos_steam_pct,
         "reviews_classified": reseñas_clasificadas,
         "game_details": game_details,
-        "groq_summary": groq_summary,
+        "groq_summary": await groq_task,
     }
 
     cache_service.set_analyze(app_id, result)
+    if response is not None:
+        response.headers["Cache-Control"] = "public, max-age=1800"
     return result
 
 
