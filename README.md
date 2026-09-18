@@ -173,7 +173,7 @@ game-recommended-backend/
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/alejandrotg-code/game-recommended-backend.git
+   git clone https://github.com/aletgdev/game-recommended-backend.git
    cd game-recommended-backend
    ```
 
@@ -256,4 +256,4 @@ tests/test_steam.py (7 tests) ........................................   [100%]
 
 * 🌐 **Portfolio Web:** [portfolio.alejandrotg.es](https://portfolio.alejandrotg.es/)
 * 💼 **LinkedIn:** [linkedin.com/in/alejandrotacoronte](https://www.linkedin.com/in/alejandrotacoronte/)
-* 🐙 **GitHub:** [github.com/alejandrotg-code](https://github.com/alejandrotg-code)
+* 🐙 **GitHub:** [github.com/aletgdev](https://github.com/aletgdev)
