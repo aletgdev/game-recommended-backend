@@ -63,4 +63,4 @@ def reset_cache():
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return TestClient(app, base_url="https://testserver")
